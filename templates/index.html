@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3D Viewer</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+>
+<div id="app">
+
+  <!-- Topbar -->
+  <header id="topbar">
+    <div class="logo">
+      <div class="logo-icon">◈</div>
+      3D Viewer
+    </div>
+    <div class="sep"></div>
+    <div class="pill"><div class="dot"></div> Local server</div>
+  </header>
+
+  <!-- Sidebar -->
+  <aside id="sidebar">
+
+    <!-- Model slots -->
+    <div class="panel-section">
+      <div class="section-label">Models</div>
+
+      <!-- Head -->
+      <div class="slot-card" id="slot-head-card">
+        <div class="slot-header">
+          <div class="slot-badge head">H</div>
+          <span class="slot-name">Head</span>
+          <button class="slot-clear" id="clear-head" title="Remove">×</button>
+        </div>
+        <div class="spinbox" id="spin-head">
+          <button class="spin-btn spin-prev">&#8249;</button>
+          <span class="spin-label">— none —</span>
+          <button class="spin-btn spin-next">&#8250;</button>
+        </div>
+      </div>
+
+      <!-- Texture -->
+      <div class="slot-card" id="slot-texture-card">
+        <div class="slot-header">
+          <div class="slot-badge texture">T</div>
+          <span class="slot-name">Texture</span>
+          <button class="slot-clear" id="clear-texture" title="Remove">×</button>
+        </div>
+        <div class="spinbox" id="spin-texture">
+          <button class="spin-btn spin-prev">&#8249;</button>
+          <span class="spin-label">— none —</span>
+          <button class="spin-btn spin-next">&#8250;</button>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="slot-card" id="slot-body-card">
+        <div class="slot-header">
+          <div class="slot-badge body">B</div>
+          <span class="slot-name">Body</span>
+          <button class="slot-clear" id="clear-body" title="Remove">×</button>
+        </div>
+        <div class="spinbox" id="spin-body">
+          <button class="spin-btn spin-prev">&#8249;</button>
+          <span class="spin-label">— none —</span>
+          <button class="spin-btn spin-next">&#8250;</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Actions -->
+    <div class="panel-section">
+      <div class="section-label">Actions</div>
+      <button class="btn btn-ghost" id="btn-reset-view">⊙ Reset view</button>
+      <button class="btn btn-ghost" id="btn-refresh" style="margin-top:8px">↺ Refresh lists</button>
+      <button class="btn btn-ghost" id="btn-random" style="margin-top:8px">&#9860 Random</button>
+    </div>
+
+    <!-- Scene info -->
+    <div class="panel-section" style="flex:1">
+      <div class="section-label">Scene info</div>
+      <div id="scene-info">
+        <div class="info-row"><span class="key">Objects</span><span class="val" id="info-objects">0</span></div>
+        <div class="info-row"><span class="key">Triangles</span><span class="val" id="info-tris">—</span></div>
+        <div class="info-row"><span class="key">Vertices</span><span class="val" id="info-verts">—</span></div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- Viewport -->
+  <main id="viewport">
+    <div id="canvas-container"></div>
+
+    <div id="empty-state">
+      <div class="icon">◈</div>
+      <p>No models loaded</p>
+      <small>Select a model from the panel to begin</small>
+    </div>
+
+    <div id="loading-overlay">
+      <div class="spinner"></div>
+    </div>
+
+    <div id="viewport-toolbar">
+      <div class="vp-btn" id="btn-wireframe" title="Toggle wireframe">⬡</div>
+      <div class="vp-btn active" id="btn-grid" title="Toggle grid">⊞</div>
+    </div>
+
+    <div id="viewport-hint">
+      <span><kbd>drag</kbd> Rotate</span>
+      <span><kbd>scroll</kbd> Zoom</span>
+    </div>
+  </main>
+
+</div>
+
+<div id="toast"></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three":         "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module" src="/static/viewer.js"></script>
+
+</body>
+</html>
