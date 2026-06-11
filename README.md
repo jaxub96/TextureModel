@@ -23,9 +23,8 @@ A local Python + Three.js app for loading and combining 3D models.
 
 ## Usage
 
-- **Model A / B**: Select a model from each dropdown to load it into the scene
-- **Model B offset**: Adjust X/Y/Z position of model B relative to the origin
-- **Combine models**: Merges both models into a single scene object
+- **Model A**: Select a model from each dropdown to load it into the scene
+- **Texture**: Select texture overlay
 - **Wireframe**: Toggle wireframe rendering
 - **Grid**: Toggle the ground grid
 - **Reset view**: Re-centers the camera on the loaded model(s)
