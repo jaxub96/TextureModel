@@ -5,94 +5,8 @@ import { OBJLoader }     from 'three/addons/loaders/OBJLoader.js';
 import { STLLoader }     from 'three/addons/loaders/STLLoader.js';
 import { TGALoader }     from 'three/addons/loaders/TGALoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
-// ─── Loaders ──────────────────────────────────────────────────────────
-const tgaLoader     = new TGALoader();
-const textureLoader = new THREE.TextureLoader();
-const textureCache  = {};
-
-function loadTexture(path) {
-    if (textureCache[path]) return Promise.resolve(textureCache[path]);
-    const ext = path.split('.').pop().toLowerCase();
-    return new Promise((resolve, reject) => {
-        const onLoad = tex => {
-            tex.flipY = false;
-            tex.colorSpace = THREE.SRGBColorSpace;
-            tex.needsUpdate = true;
-            textureCache[path] = tex;
-            resolve(tex);
-        };
-        if (ext === 'tga') tgaLoader.load(path, onLoad, undefined, reject);
-        else               textureLoader.load(path, onLoad, undefined, reject);
-    });
-}
-const modelCache = {};
-const gltfLoader = new GLTFLoader();
 
 
-function loadModel(url) {
-    if (modelCache[url]) {
-        return modelCache[url].then(model => model.clone(true));
-    }
-
-    modelCache[url] = new Promise((resolve, reject) => {
-        const ext = url.split('.').pop().toLowerCase();
-
-        if (ext === 'glb' || ext === 'gltf') {
-            gltfLoader.load(
-                url,
-                gltf => resolve(gltf.scene),
-                undefined,
-                reject
-            );
-        }
-        // else if (ext === 'obj') {
-        //     objLoader.load(
-        //         url,
-        //         obj => {
-        //             obj.traverse(child => {
-        //                 if (child.isMesh) {
-        //                     child.material = new THREE.MeshStandardMaterial({
-        //                         color: 0x8899bb,
-        //                         roughness: 0.6,
-        //                         metalness: 0.1
-        //                     });
-        //                 }
-        //             });
-
-        //             resolve(obj);
-        //         },
-        //         undefined,
-        //         reject
-        //     );
-        // }
-        // else if (ext === 'stl') {
-        //     stlLoader.load(
-        //         url,
-        //         geometry => {
-        //             geometry.computeVertexNormals();
-
-        //             resolve(
-        //                 new THREE.Mesh(
-        //                     geometry,
-        //                     new THREE.MeshStandardMaterial({
-        //                         color: 0x8899bb,
-        //                         roughness: 0.5,
-        //                         metalness: 0.2
-        //                     })
-        //                 )
-        //             );
-        //         },
-        //         undefined,
-        //         reject
-        //     );
-        // }
-        else {
-            reject(new Error(`Unsupported format: ${ext}`));
-        }
-    });
-
-    return modelCache[url].then(model => SkeletonUtils.clone(model));  
-}
 
 // ─── Scene ────────────────────────────────────────────────────────────
 const container = document.getElementById('canvas-container');
@@ -110,34 +24,28 @@ camera.position.set(-5, 0, 5);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping  = true;
-controls.dampingFactor  = 0.06;
+controls.dampingFactor  = 0.1;
 controls.enablePan      = true;
-controls.minDistance    = 0.1;
-controls.maxDistance    = 500;
+controls.minDistance    = 1;
+controls.maxDistance    = 5;
 
 // ─── Lighting ─────────────────────────────────────────────────────────
-scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-const sun = new THREE.DirectionalLight(0xffffff, 1.4);
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+const sun = new THREE.DirectionalLight(0xffffff,0);
 sun.position.set(5, 10, 5);
 sun.castShadow = true;
 scene.add(sun);
 const fill = new THREE.DirectionalLight(0x8090ff, 0.4);
 fill.position.set(-5, 2, -5);
 scene.add(fill);
-const rim = new THREE.DirectionalLight(0xffd580, 0.3);
-rim.position.set(0, -3, -8);
+const rim = new THREE.DirectionalLight(0xffd580, 1);
+rim.position.set(3, 5, -5);
 scene.add(rim);
 
 // ─── Grid ─────────────────────────────────────────────────────────────
 const grid = new THREE.GridHelper(20, 40, 0x2a2f3d, 0x1e222b);
 scene.add(grid);
 
-// ─── State ────────────────────────────────────────────────────────────
-let modelHead    = null;
-let modelBody    = null;
-let activeTexture = null;
-let wireframeOn  = false;
-let gridOn       = true;
 
 // ─── Resize ───────────────────────────────────────────────────────────
 function resize() {
@@ -197,8 +105,8 @@ function fitCamera(target) {
     const sphere = new THREE.Sphere();
     box.getCenter(center);
     box.getBoundingSphere(sphere);
-    const dist = sphere.radius * 6;
-    camera.position.set(center.x, center.y, center.z + dist);
+    const dist = sphere.radius * 4;
+    camera.position.set(center.x, center.y+dist*+0.2, center.z + dist);
     controls.target.copy(center);
     controls.update();
 }
@@ -210,6 +118,110 @@ function applyWireframe(obj, on) {
         const mats = Array.isArray(child.material) ? child.material : [child.material];
         mats.forEach(m => m.wireframe = on);
     });
+}
+
+
+// ─── State ────────────────────────────────────────────────────────────
+let modelHead    = null;
+let modelBody    = null;
+let activeTexture = null;
+let wireframeOn  = false;
+let gridOn       = true;
+
+// ─── Loaders ──────────────────────────────────────────────────────────
+const tgaLoader     = new TGALoader();
+const textureLoader = new THREE.TextureLoader();
+const textureCache  = {};
+const modelCache = {};
+const gltfLoader = new GLTFLoader();
+
+function loadTexture(path) {
+    if (textureCache[path]) return Promise.resolve(textureCache[path]);
+    const ext = path.split('.').pop().toLowerCase();
+    return new Promise((resolve, reject) => {
+        const onLoad = tex => {
+            tex.flipY = false;
+            tex.colorSpace = THREE.SRGBColorSpace;
+            tex.needsUpdate = true;
+            textureCache[path] = tex;
+            resolve(tex);
+        };
+        if (ext === 'tga') tgaLoader.load(path, onLoad, undefined, reject);
+        else               textureLoader.load(path, onLoad, undefined, reject);
+    });
+}
+
+
+function loadModel(url) {
+    if (modelCache[url]) {
+        return modelCache[url].then(model => model.clone(true));
+    }
+
+    modelCache[url] = new Promise((resolve, reject) => {
+        const ext = url.split('.').pop().toLowerCase();
+
+    if (ext === 'glb' || ext === 'gltf') {
+        gltfLoader.load(
+            url,
+            gltf => {
+                gltf.scene.traverse(child => {
+                    if (child.isMesh && child.geometry) {
+                        child.geometry.computeVertexNormals();
+                    }
+                });
+                resolve(gltf.scene);
+            },
+            undefined,
+            reject
+        );
+    }
+        // else if (ext === 'obj') {
+        //     objLoader.load(
+        //         url,
+        //         obj => {
+        //             obj.traverse(child => {
+        //                 if (child.isMesh) {
+        //                     child.material = new THREE.MeshStandardMaterial({
+        //                         color: 0x8899bb,
+        //                         roughness: 0.6,
+        //                         metalness: 0.1
+        //                     });
+        //                 }
+        //             });
+
+        //             resolve(obj);
+        //         },
+        //         undefined,
+        //         reject
+        //     );
+        // }
+        // else if (ext === 'stl') {
+        //     stlLoader.load(
+        //         url,
+        //         geometry => {
+        //             geometry.computeVertexNormals();
+
+        //             resolve(
+        //                 new THREE.Mesh(
+        //                     geometry,
+        //                     new THREE.MeshStandardMaterial({
+        //                         color: 0x8899bb,
+        //                         roughness: 0.5,
+        //                         metalness: 0.2
+        //                     })
+        //                 )
+        //             );
+        //         },
+        //         undefined,
+        //         reject
+        //     );
+        // }
+        else {
+            reject(new Error(`Unsupported format: ${ext}`));
+        }
+    });
+
+    return modelCache[url].then(model => SkeletonUtils.clone(model));  
 }
 
 // ─── Texture ──────────────────────────────────────────────────────────
@@ -262,15 +274,17 @@ async function loadSlot(slot, filename) {
         slot === 'body'
         ? '/body-models/' + filename
         : '/models/' + filename;
-
+        
         const obj = await loadModel(path);
         if (wireframeOn) applyWireframe(obj, true);
 
         if (slot === 'head') {
             if (modelHead) scene.remove(modelHead);
             modelHead = obj;
+            modelHead.position.z -= 0.15;   // 20 cm assuming 1 unit = 1 m
             if (activeTexture) applyTextureToModel(modelHead, activeTexture);
             document.getElementById('slot-head-card').classList.add('has-model', 'active');
+        
         } else if (slot === 'body') {
             if (modelBody) scene.remove(modelBody);
             modelBody = obj;
@@ -327,11 +341,17 @@ function initSpinbox(containerId, onChange) {
             items = list;
             index = list.length ? 0 : -1;
             label.textContent = list.length ? list[0] : '— none —';
-            // don't auto-fire onChange on populate — wait for user interaction
         },
         reset() {
             index = items.length ? 0 : -1;
             label.textContent = items.length ? items[0] : '— none —';
+        },
+        setLabel(value) {
+            const i = items.indexOf(value);
+            if (i >= 0) {
+                index = i;
+                label.textContent = value;
+            }
         },
         getValue() { return index >= 0 ? items[index] : null; }
     };
@@ -347,36 +367,38 @@ let textureFiles = [];
 // ─── List refresh ─────────────────────────────────────────────────────
 async function refreshHeadModelList() {
     try {
-        const res   = await fetch('/api/models');
+        const res = await fetch('/api/models');
         const files = await res.json();
-        headModelFiles = files;
-        headSpin.setItems(files);
-        bodySpin.setItems(files);
-        if (files.length === 0) toast('No models found in /models folder', 'error');
+        headModelFiles = files.filter(f => f.startsWith('HUM_HEAD_'));
+        headSpin.setItems(headModelFiles);
+        if (headModelFiles.length === 0) toast('No HUM_HEAD_* models found', 'error');
+        else loadSlot('head', headModelFiles[0]);
     } catch {
         toast('Could not reach server', 'error');
     }
 }
+
 async function refreshBodyModelList() {
     try {
         const res = await fetch('/api/body-models');
         const files = await res.json();
-
-        bodyModelFiles = files;
-        bodySpin.setItems(files);
-
+        bodyModelFiles = files.filter(f => !f.startsWith('HUM_HEAD_'));
+        bodySpin.setItems(bodyModelFiles);
+        if (bodyModelFiles.length === 0) toast('No body models found', 'error');
+        else loadSlot('body', bodyModelFiles[0]);
     } catch {
         toast('Could not load body models', 'error');
     }
 }
+
 async function refreshTextureList() {
     try {
-        const res   = await fetch('/api/textures');
+        const res = await fetch('/api/textures');
         const files = await res.json();
         textureFiles = files;
         textureSpin.setItems(files);
-        // Preload all textures in the background
         files.forEach(f => loadTexture('/textures/' + f).catch(() => {}));
+        if (files.length > 0) applyTexture(files[0]);
     } catch {
         toast('Could not load textures', 'error');
     }
@@ -394,8 +416,9 @@ document.getElementById('btn-reset-view').addEventListener('click', () => {
 });
 
 document.getElementById('btn-refresh').addEventListener('click', () => {
-    refreshHeadModelList();
     refreshTextureList();
+    refreshHeadModelList();
+    refreshBodyModelList();
 });
 
 document.getElementById('btn-wireframe').addEventListener('click', function () {
@@ -407,14 +430,20 @@ document.getElementById('btn-random').addEventListener('click', async () => {
 
     if (!bodyModelFiles.length || !headModelFiles.length || !textureFiles.length) return;
     const randomHead = headModelFiles[Math.floor(Math.random() * headModelFiles.length)];
-    //const randomBody = bodyModelFiles[Math.floor(Math.random() * bodyModelFiles.length)];
+    const randomBody = bodyModelFiles[Math.floor(Math.random() * bodyModelFiles.length)];
     const randomTexture = textureFiles[Math.floor(Math.random() * textureFiles.length)];
 
     await loadSlot('head', randomHead);
-    //await loadSlot('body', randomBody);
     await applyTexture(randomTexture);
+    await loadSlot('body', randomBody);
+
+    headSpin.setLabel(randomHead);
+    textureSpin.setLabel(randomTexture);
+    bodySpin.setLabel(randomBody);
 
 });
+
+
 document.getElementById('btn-grid').addEventListener('click', function () {
     gridOn = !gridOn;
     grid.visible = gridOn;
