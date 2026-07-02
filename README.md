@@ -1,3 +1,10 @@
+to install and run:
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python app.py
+
+
 # 3D Viewer
 
 A local Python + Three.js app for loading and combining 3D models.
